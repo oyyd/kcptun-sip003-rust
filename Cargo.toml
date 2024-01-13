@@ -1,0 +1,18 @@
+[package]
+name = "kcptun-sip003-rust"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.35.1", features = [
+  "macros",
+  "net",
+  "rt",
+  "rt-multi-thread",
+] }
+tokio_kcp = "0.9.6"
+tokio_smux = "0.1.1"
+anyhow = "1.0.79"
+log = "0.4.20"
