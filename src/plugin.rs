@@ -48,6 +48,7 @@ impl PluginOptions {
   }
 }
 
+#[derive(Clone)]
 pub struct PluginConfig {
   is_client: bool,
 
@@ -55,7 +56,6 @@ pub struct PluginConfig {
   local_port: u16,
   remote_host: String,
   remote_port: u16,
-  options: String,
 }
 
 impl Default for PluginConfig {
@@ -66,7 +66,6 @@ impl Default for PluginConfig {
       local_port: 12948,
       remote_host: "127.0.0.1".to_string(),
       remote_port: 29900,
-      options: "".to_string(),
     }
   }
 }

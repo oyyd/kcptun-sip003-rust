@@ -61,7 +61,12 @@ async fn proxy(mut socket: TcpStream, mut smux_stream: Stream) -> Result<()> {
   Ok(())
 }
 
-async fn handle_stream(smux_stream: Stream, target_addr: SocketAddr) -> Result<()> {
+async fn handle_stream(
+  smux_stream: Stream,
+  local_addr: SocketAddr,
+  target_addr: SocketAddr,
+  sockbuf: u32,
+) -> Result<()> {
   let socket = {
     match target_addr.is_ipv4() {
       true => TcpSocket::new_v4(),
@@ -69,19 +74,24 @@ async fn handle_stream(smux_stream: Stream, target_addr: SocketAddr) -> Result<(
     }
   }?;
 
-  // TODO 4MB
-  let sockbuf = 1024 * 1024 * 4;
   socket.set_recv_buffer_size(sockbuf)?;
   socket.set_send_buffer_size(sockbuf)?;
 
   let tcp_socket = socket.connect(target_addr).await?;
+
+  log::info!("proxy {} -> {}", local_addr, target_addr);
 
   proxy(tcp_socket, smux_stream).await?;
 
   Ok(())
 }
 
-async fn loop_smux_session(mut session: Session, target_addr: SocketAddr) -> Result<()> {
+async fn loop_smux_session(
+  mut session: Session,
+  local_addr: SocketAddr,
+  target_addr: SocketAddr,
+  sockbuf: u32,
+) -> Result<()> {
   // - accept smux stream
   loop {
     let smux_stream = session.accept_stream().await?;
@@ -91,7 +101,7 @@ async fn loop_smux_session(mut session: Session, target_addr: SocketAddr) -> Res
 
     tokio::spawn(async move {
       // - create tcp socket connect to the remote and proxy their data
-      let res = handle_stream(smux_stream, target_addr.clone()).await;
+      let res = handle_stream(smux_stream, local_addr, target_addr.clone(), sockbuf).await;
       let _ = res.map_err(|err| {
         log::warn!("proxy failed, err {}", err.to_string());
       });
@@ -117,6 +127,7 @@ impl Server {
     );
 
     let mut listener = KcpListener::bind(self.config.kcp, listen_addr).await?;
+    let sockbuf = self.config.sockbuf;
 
     // - accept kcp client stream
     loop {
@@ -128,7 +139,7 @@ impl Server {
       let session = Session::server(kcp_stream, Config::new_smux())?;
 
       tokio::spawn(async move {
-        let res = loop_smux_session(session, target_addr).await;
+        let res = loop_smux_session(session, addr, target_addr, sockbuf).await;
         let _ = res.map_err(|err| {
           log::warn!("smux session failed, err: {}", err.to_string());
         });

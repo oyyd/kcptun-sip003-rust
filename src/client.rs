@@ -55,13 +55,13 @@ impl Client {
     // - bind local tcp server
     let local_addr = self.config.plugin.client_local_addr()?;
 
-    log::info!("tcp bind local_addr {}", local_addr);
+    log::info!("tcp client bind local_addr {}", local_addr);
 
     let tcp_listener = TcpListener::bind(local_addr).await?;
 
     // - receive tcp clients and create kcp clients stream to proxy them
     loop {
-      let (socket, _) = tcp_listener.accept().await?;
+      let (socket, local_addr) = tcp_listener.accept().await?;
       let smux_stream = session.open_stream().await;
 
       // TODO restart if kcp stream broken?
@@ -72,6 +72,8 @@ impl Client {
       }
 
       let smux_stream = smux_stream?;
+
+      log::info!("proxy {} -> {}", local_addr, remote_addr);
 
       tokio::spawn(async move {
         let res = proxy(socket, smux_stream).await;
