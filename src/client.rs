@@ -54,6 +54,9 @@ impl Client {
 
     // - bind local tcp server
     let local_addr = self.config.plugin.client_local_addr()?;
+
+    log::info!("tcp bind local_addr {}", local_addr);
+
     let tcp_listener = TcpListener::bind(local_addr).await?;
 
     // - receive tcp clients and create kcp clients stream to proxy them

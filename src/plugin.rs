@@ -7,6 +7,46 @@ const LOCAL_HOST: &str = "SS_LOCAL_HOST";
 const LOCAL_PORT: &str = "SS_LOCAL_PORT";
 const REMOTE_HOST: &str = "SS_REMOTE_HOST";
 const REMOTE_PORT: &str = "SS_REMOTE_PORT";
+const PLUGIN_OPTIONS: &str = "SS_PLUGIN_OPTIONS";
+
+pub struct PluginOptions {
+  pub is_client: bool,
+}
+
+impl PluginOptions {
+  pub fn new() -> Self {
+    let mut opts = PluginOptions { is_client: false };
+
+    let opts_str = env::var(PLUGIN_OPTIONS);
+
+    if opts_str.is_err() {
+      return opts;
+    }
+
+    let opts_str = opts_str.unwrap();
+
+    let parts = opts_str.split(";");
+
+    for item in parts.into_iter() {
+      let kv: Vec<_> = item.split("=").collect();
+      if kv.len() != 2 {
+        continue;
+      }
+
+      let key = kv[0];
+      let value = kv[1];
+
+      match key {
+        "client" => opts.is_client = value == "true",
+        _ => {
+          //
+        }
+      }
+    }
+
+    opts
+  }
+}
 
 pub struct PluginConfig {
   is_client: bool,
@@ -15,6 +55,7 @@ pub struct PluginConfig {
   local_port: u16,
   remote_host: String,
   remote_port: u16,
+  options: String,
 }
 
 impl Default for PluginConfig {
@@ -25,6 +66,7 @@ impl Default for PluginConfig {
       local_port: 12948,
       remote_host: "127.0.0.1".to_string(),
       remote_port: 29900,
+      options: "".to_string(),
     }
   }
 }
@@ -79,26 +121,26 @@ impl PluginConfig {
   }
 
   pub fn server_listen_addr(&self) -> Result<net::SocketAddr> {
-    let addr = format!("{}{}", self.remote_host, self.remote_port);
+    let addr = format!("{}:{}", self.remote_host, self.remote_port);
     let addr = net::SocketAddr::from_str(&addr)?;
     Ok(addr)
   }
 
   pub fn server_target_addr(&self) -> Result<net::SocketAddr> {
-    let addr = format!("{}{}", self.local_host, self.local_port);
+    let addr = format!("{}:{}", self.local_host, self.local_port);
     let addr = net::SocketAddr::from_str(&addr)?;
     Ok(addr)
   }
 
   // TODO check
   pub fn client_local_addr(&self) -> Result<net::SocketAddr> {
-    let addr = format!("{}{}", self.local_host, self.local_port);
+    let addr = format!("{}:{}", self.local_host, self.local_port);
     let addr = net::SocketAddr::from_str(&addr)?;
     Ok(addr)
   }
 
   pub fn client_remote_addr(&self) -> Result<net::SocketAddr> {
-    let addr = format!("{}{}", self.remote_host, self.remote_port);
+    let addr = format!("{}:{}", self.remote_host, self.remote_port);
     let addr = net::SocketAddr::from_str(&addr)?;
     Ok(addr)
   }

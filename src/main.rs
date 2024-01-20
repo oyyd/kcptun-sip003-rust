@@ -4,6 +4,7 @@ mod plugin;
 mod server;
 
 use anyhow::Result;
+use env_logger;
 use tokio;
 
 async fn server() -> Result<()> {
@@ -28,5 +29,14 @@ async fn client() -> Result<()> {
 
 #[tokio::main]
 async fn main() {
-  client().await.unwrap();
+  let env = env_logger::Env::new().filter_or("RUST_LOG", "info");
+  env_logger::init_from_env(env);
+
+  let plugin_opts = plugin::PluginOptions::new();
+
+  if plugin_opts.is_client {
+    client().await.unwrap()
+  } else {
+    server().await.unwrap()
+  }
 }
