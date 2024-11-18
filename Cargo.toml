@@ -17,6 +17,7 @@ tokio_smux = "0.2"
 anyhow = "1.0.79"
 log = "0.4.20"
 env_logger = "0.10.1"
+tokio-io-timeout = "1.2.0"
 
 [dev-dependencies]
 tokio-socks = "0.5.1"
