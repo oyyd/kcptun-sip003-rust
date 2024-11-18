@@ -7,6 +7,7 @@ use tokio::{
   io::{AsyncReadExt, AsyncWriteExt},
   net::{TcpSocket, TcpStream},
 };
+use tokio_io_timeout::TimeoutStream;
 use tokio_kcp::KcpListener;
 use tokio_smux::{Session, Stream};
 
@@ -14,7 +15,7 @@ pub struct Server {
   config: Config,
 }
 
-const MAX_FRAME_DATA_LEN: usize = 2048;
+const MAX_FRAME_DATA_LEN: usize = 2048 * 5;
 
 async fn proxy(mut socket: TcpStream, mut smux_stream: Stream) -> Result<()> {
   let mut buf: Vec<u8> = vec![0; 65535];
@@ -133,10 +134,15 @@ impl Server {
     loop {
       let (kcp_stream, addr) = listener.accept().await?;
 
+      let mut kcp_stream_with_timeout = TimeoutStream::new(kcp_stream);
+      if self.config.server_kcp_stream_read_timeout.is_some() {
+        kcp_stream_with_timeout.set_read_timeout(self.config.server_kcp_stream_read_timeout);
+      }
+
       log::info!("accept kcp stream, addr {}", addr);
 
       // - wrap smux
-      let session = Session::server(kcp_stream, Config::new_smux())?;
+      let session = Session::server(Box::pin(kcp_stream_with_timeout), Config::new_smux())?;
 
       tokio::spawn(async move {
         let res = loop_smux_session(session, addr, target_addr, sockbuf).await;

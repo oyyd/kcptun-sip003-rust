@@ -34,6 +34,5 @@ kcptun-sip003-rust
 
 Start a client:
 ```bash
-
 SS_PLUGIN_OPTIONS="client=true" kcptun-sip003-rust
 ```

@@ -1,3 +1,5 @@
+use core::time;
+
 use crate::plugin::PluginConfig;
 use anyhow::Result;
 use tokio_kcp::{KcpConfig, KcpNoDelayConfig};
@@ -8,6 +10,7 @@ pub struct Config {
   pub plugin: PluginConfig,
   pub kcp: KcpConfig,
   pub sockbuf: u32,
+  pub server_kcp_stream_read_timeout: Option<time::Duration>,
 }
 
 impl Config {
@@ -23,6 +26,7 @@ impl Config {
       plugin,
       kcp,
       sockbuf: Self::default_sokcbuf(),
+      server_kcp_stream_read_timeout: None,
     })
   }
 
@@ -34,6 +38,7 @@ impl Config {
       plugin,
       kcp,
       sockbuf: Self::default_sokcbuf(),
+      server_kcp_stream_read_timeout: Some(time::Duration::from_secs(5)),
     })
   }
 
