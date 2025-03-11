@@ -134,15 +134,15 @@ impl Server {
     loop {
       let (kcp_stream, addr) = listener.accept().await?;
 
-      let mut kcp_stream_with_timeout = TimeoutStream::new(kcp_stream);
-      if self.config.server_kcp_stream_read_timeout.is_some() {
-        kcp_stream_with_timeout.set_read_timeout(self.config.server_kcp_stream_read_timeout);
-      }
+      // let mut kcp_stream_with_timeout = TimeoutStream::new(kcp_stream);
+      // if self.config.server_kcp_stream_read_timeout.is_some() {
+      //   kcp_stream_with_timeout.set_read_timeout(self.config.server_kcp_stream_read_timeout);
+      // }
 
       log::info!("accept kcp stream, addr {}", addr);
 
       // - wrap smux
-      let session = Session::server(Box::pin(kcp_stream_with_timeout), Config::new_smux())?;
+      let session = Session::server(Box::pin(kcp_stream), Config::new_smux())?;
 
       tokio::spawn(async move {
         let res = loop_smux_session(session, addr, target_addr, sockbuf).await;
