@@ -5,12 +5,14 @@ use anyhow::Result;
 use tokio_kcp::{KcpConfig, KcpNoDelayConfig};
 use tokio_smux::SmuxConfig;
 
+const DEFAULT_RW_TIMEOUT: time::Duration = time::Duration::from_secs(600);
+
 #[derive(Clone)]
 pub struct Config {
   pub plugin: PluginConfig,
   pub kcp: KcpConfig,
   pub sockbuf: u32,
-  pub server_kcp_stream_read_timeout: Option<time::Duration>,
+  pub server_kcp_stream_rw_timeout: Option<time::Duration>,
 }
 
 impl Config {
@@ -26,7 +28,7 @@ impl Config {
       plugin,
       kcp,
       sockbuf: Self::default_sokcbuf(),
-      server_kcp_stream_read_timeout: None,
+      server_kcp_stream_rw_timeout: None,
     })
   }
 
@@ -38,7 +40,7 @@ impl Config {
       plugin,
       kcp,
       sockbuf: Self::default_sokcbuf(),
-      server_kcp_stream_read_timeout: Some(time::Duration::from_secs(5)),
+      server_kcp_stream_rw_timeout: Some(DEFAULT_RW_TIMEOUT),
     })
   }
 
